@@ -1,0 +1,77 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company        : RCI_DRDO@HYD
+// Engineer       : REVANTH ROY
+//
+// Module Name    : spi_top
+// Project        : SPI Master-Slave Loopback
+//
+// Description:
+//   Integrates SPI Master (Transmitter) and SPI Slave (reciver).
+//   The three SPI bus wires (mosi, sclk, cs) are internal signals
+//   connecting master outputs to slave inputs.
+//
+//   spi_top
+//   ┌─────────────────────────────────────────────┐
+//   │                                             │
+//   │  ┌──────────────┐    mosi    ┌───────────┐  │
+//   │  │  Transmitter │ ─────────► │  reciver  │  │
+//   │  │  (SPI Master)│    sclk    │ (SPI Slave│  │
+//   │  │              │ ─────────► │           │  │
+//   │  │              │    cs      │           │  │
+//   │  │              │ ─────────► │           │  │
+//   │  └──────────────┘            └───────────┘  │
+//   │                                             │
+//   └─────────────────────────────────────────────┘
+//
+//////////////////////////////////////////////////////////////////////////////////
+
+module spi_top(
+    input        clk,
+    input        reset,
+    input        start,
+    input  [7:0] d_in,
+    output       busy_tx,
+    output       busy_rx,
+    output       done_tx,
+    output       done_rx,
+    output [7:0] rx_out
+);
+
+    //-------------------------------------------------
+    // Internal SPI Bus Wires
+    //-------------------------------------------------
+    wire mosi;
+    wire sclk;
+    wire cs;
+
+    //-------------------------------------------------
+    // SPI Master (Transmitter)
+    //-------------------------------------------------
+    Transmitter master(
+        .clk   (clk),
+        .reset (reset),
+        .start (start),
+        .d_in  (d_in),
+        .busy  (busy_tx),
+        .mosi  (mosi),
+        .sclk  (sclk),
+        .cs    (cs),
+        .done  (done_tx)
+    );
+
+    //-------------------------------------------------
+    // SPI Slave (Receiver)
+    //-------------------------------------------------
+    reciver slave(
+        .clk    (clk),
+        .reset  (reset),
+        .mosi   (mosi),
+        .sclk   (sclk),
+        .cs     (cs),
+        .rx_out (rx_out),
+        .busy   (busy_rx),
+        .done   (done_rx)
+    );
+
+endmodule
