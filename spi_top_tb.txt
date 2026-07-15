@@ -1,0 +1,121 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company        : RCI_DRDO@HYD
+// Engineer       : REVANTH ROY
+//
+// Module Name    : spi_top_tb
+// Project        : SPI Master-Slave Loopback Testbench
+//
+// Tests:
+//   Vector 1  : A5 (10100101)
+//   Vector 2  : 3C (00111100)
+//   Vector 3  : 81 (10000001)
+//////////////////////////////////////////////////////////////////////////////////
+
+module spi_top_tb;
+
+    reg        clk;
+    reg        reset;
+    reg        start;
+    reg  [7:0] d_in;
+    wire       busy_tx;
+    wire       busy_rx;
+    wire       done_tx;
+    wire       done_rx;
+    wire [7:0] rx_out;
+
+    //----------------------------------------------------------
+    // DUT
+    //----------------------------------------------------------
+    spi_top dut(
+        .clk    (clk),
+        .reset  (reset),
+        .start  (start),
+        .d_in   (d_in),
+        .busy_tx(busy_tx),
+        .busy_rx(busy_rx),
+        .done_tx(done_tx),
+        .done_rx(done_rx),
+        .rx_out (rx_out)
+    );
+
+    //----------------------------------------------------------
+    // 100 MHz Clock  (period = 10 ns)
+    //----------------------------------------------------------
+    initial
+    begin
+        clk = 0;
+        forever #5 clk = ~clk;
+    end
+
+    //----------------------------------------------------------
+    // Stimulus
+    //----------------------------------------------------------
+    initial
+    begin
+        reset = 1;
+        start = 0;
+        d_in  = 8'h00;
+
+        #20;
+        reset = 0;
+
+        // --- Test Vector 1 : A5 ---
+        #20;
+        d_in  = 8'hA5;
+        start = 1;
+        #10;
+        start = 0;
+        wait(done_rx);
+
+        if(rx_out == 8'hA5)
+            $display("PASS : A5 Received correctly : rx_out = %h", rx_out);
+        else
+            $display("FAIL : Expected A5, Received %h", rx_out);
+
+        #100;
+
+        // --- Test Vector 2 : 3C ---
+        d_in  = 8'h3C;
+        start = 1;
+        #10;
+        start = 0;
+        wait(done_rx);
+
+        if(rx_out == 8'h3C)
+            $display("PASS : 3C Received correctly : rx_out = %h", rx_out);
+        else
+            $display("FAIL : Expected 3C, Received %h", rx_out);
+
+        #100;
+
+        // --- Test Vector 3 : 81 ---
+        d_in  = 8'h81;
+        start = 1;
+        #10;
+        start = 0;
+        wait(done_rx);
+
+        if(rx_out == 8'h81)
+            $display("PASS : 81 Received correctly : rx_out = %h", rx_out);
+        else
+            $display("FAIL : Expected 81, Received %h", rx_out);
+
+        #200;
+
+        $display("--------------------------------------------------");
+        $display("SPI LOOPBACK TEST COMPLETED");
+        $display("--------------------------------------------------");
+        $finish;
+    end
+
+    //----------------------------------------------------------
+    // Monitor
+    //----------------------------------------------------------
+    initial
+    begin
+        $monitor("Time=%0t  TX=%h  RX=%h  TX_DONE=%b  RX_DONE=%b",
+                  $time, d_in, rx_out, done_tx, done_rx);
+    end
+
+endmodule
